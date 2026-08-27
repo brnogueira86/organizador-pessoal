@@ -115,6 +115,27 @@
       .jarvis-chip { border:1px solid #2A313C; background:#12171E; color:#AEB6C2; border-radius:999px; padding:.38rem .7rem; font-size:10px; transition:.18s ease; }
       .jarvis-chip:hover { border-color:#7C8FD9; color:#EDE6D8; transform:translateY(-1px); }
       .jarvis-status-dot { width:7px; height:7px; border-radius:9999px; box-shadow:0 0 10px currentColor; }
+    /* Ajustes para celular */
+@media (max-width: 639px) {
+    .jarvis-hud > .flex {
+        gap: 0.75rem;
+    }
+
+    .jarvis-hud h2.font-serif {
+        font-size: 1.5rem !important;
+        line-height: 1.2;
+    }
+
+    .jarvis-hud .text-right {
+        text-align: left;
+    }
+
+    .jarvis-hud .text-right .font-mono {
+        font-size: 1.875rem !important;
+        line-height: 1.1;
+    }
+}
+    
     </style>
 </head>
 <body class="min-h-screen w-full">
