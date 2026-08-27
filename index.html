@@ -273,7 +273,7 @@
                     </button>
                 </div>
             </div>
-            <nav class="max-w-5xl mx-auto flex gap-1 -mb-2 mt-2 border-t border-[#2A313C]/50 pt-2 overflow-x-auto" id="nav-tabs">
+            <nav class="max-w-5xl mx-auto flex gap-1 -mb-2 mt-2 border-t border-[#2A313C]/50 pt-2 overflow-x-auto snap-x snap-mandatory scroll-smooth px-1 sm:px-0" id="nav-tabs">
                 <!-- Tabs injected by JS -->
             </nav>
         </header>
@@ -934,7 +934,7 @@
           navContainer.innerHTML = TABS.map(t => {
             const active = t.id === state.currentTab;
             return `
-              <button onclick="window.switchTab('${t.id}')" class="relative flex items-center gap-2 px-4 py-3 text-xs uppercase tracking-widest font-semibold transition-colors whitespace-nowrap" style="color: ${active ? t.accent : "#8A8F98"}">
+              <button onclick="window.switchTab('${t.id}')" class="relative flex items-center gap-2 px-4 py-3 text-xs uppercase tracking-widest font-semibold transition-colors whitespace-nowrap snap-start shrink-0" style="color: ${active ? t.accent : "#8A8F98"}">
                 <i data-lucide="${t.icon}" class="w-4 h-4"></i>
                 <span>${t.label}</span>
                 ${active ? `<span class="absolute left-2 right-2 -bottom-px h-[3px] rounded-full" style="background: ${t.accent}"></span>` : ""}
