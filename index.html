@@ -4020,11 +4020,11 @@ ${buildJarvisRichContext()}`;
           const data = document.getElementById("f-shift-data").value;
           const inicio = document.getElementById("f-shift-inicio").value;
           const fim = document.getElementById("f-shift-fim").value;
-          const valor = document.getElementById("f-shift-valor").value;
+          const valor = document.getElementById("f-shift-valor").value || "0";
           const obs = document.getElementById("f-shift-obs").value;
           const extra = document.getElementById("f-shift-extra").value;
 
-          if (!local || !valor) return;
+          if (!local) return;
           if (state.editingShiftId) {
             state.shifts = state.shifts.map(s => s.id === state.editingShiftId ? { ...s, data: data || s.data, local, inicio, fim, valor, obs, extra } : s);
             state.editingShiftId = null;
