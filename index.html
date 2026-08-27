@@ -3700,7 +3700,7 @@ ${buildJarvisRichContext()}`;
                   <label class="flex flex-col gap-1 text-xs text-[#8A8F98] uppercase tracking-wide">
                     Tipo de plantão
                     <select id="f-shift-extra" class="input-cls" onchange="window.syncForm('shiftForm','extra',this.value)">
-                      <option value="nao" ${state.shiftForm.extra !== "sim" ? "selected" : ""}>Normal</option>
+                      <option value="nao" ${state.shiftForm.extra !== "sim" ? "selected" : ""}>Fixo</option>
                       <option value="sim" ${state.shiftForm.extra === "sim" ? "selected" : ""}>Extra</option>
                     </select>
                   </label>
