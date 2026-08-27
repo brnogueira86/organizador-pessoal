@@ -3711,6 +3711,22 @@ ${buildJarvisRichContext()}`;
                     </select>
                   </label>
                   <div class="grid grid-cols-2 gap-3">
+    <label class="flex flex-col gap-1 text-xs text-[#8A8F98] uppercase tracking-wide">
+        Repetir
+        <select id="f-shift-repetir" class="input-cls" onchange="window.syncForm('shiftForm','repetir',this.value)">
+            <option value="nenhum" ${state.shiftForm.repetir === "nenhum" ? "selected" : ""}>Não repetir</option>
+            <option value="diario" ${state.shiftForm.repetir === "diario" ? "selected" : ""}>Diariamente</option>
+            <option value="semanal" ${state.shiftForm.repetir === "semanal" ? "selected" : ""}>Semanalmente</option>
+            <option value="mensal" ${state.shiftForm.repetir === "mensal" ? "selected" : ""}>Mensalmente</option>
+        </select>
+    </label>
+
+    <label class="flex flex-col gap-1 text-xs text-[#8A8F98] uppercase tracking-wide">
+        Repetir até
+        <input id="f-shift-repetir-ate" type="date" class="input-cls" value="${state.shiftForm.repetirAte}" oninput="window.syncForm('shiftForm','repetirAte',this.value)">
+    </label>
+</div>
+                  <div class="grid grid-cols-2 gap-3">
                     <label class="flex flex-col gap-1 text-xs text-[#8A8F98] uppercase tracking-wide">
                       Data
                       <input id="f-shift-data" type="date" class="input-cls" value="${state.shiftForm.data}" oninput="window.syncForm('shiftForm','data',this.value)">
@@ -4024,12 +4040,61 @@ ${buildJarvisRichContext()}`;
           const obs = document.getElementById("f-shift-obs").value;
           const extra = document.getElementById("f-shift-extra").value;
 
+            const repetir = document.getElementById("f-shift-repetir").value;
+const repetirAte = document.getElementById("f-shift-repetir-ate").value;
+
           if (!local) return;
           if (state.editingShiftId) {
             state.shifts = state.shifts.map(s => s.id === state.editingShiftId ? { ...s, data: data || s.data, local, inicio, fim, valor, obs, extra } : s);
             state.editingShiftId = null;
           } else {
-            state.shifts.push({ id: uid(), data: data || state.selectedDay, local, inicio, fim, valor, obs, extra });
+            const dataInicial = data || state.selectedDay;
+
+if (repetir === "nenhum" || !repetirAte) {
+    state.shifts.push({
+        id: uid(),
+        data: dataInicial,
+        local,
+        inicio,
+        fim,
+        valor,
+        obs,
+        extra,
+        repetir: "nenhum",
+        serieId: null
+    });
+} else {
+    const serieId = uid();
+    let atual = new Date(dataInicial + "T12:00:00");
+    const limite = new Date(repetirAte + "T12:00:00");
+
+    while (atual <= limite) {
+        const iso = atual.toISOString().slice(0, 10);
+
+        state.shifts.push({
+            id: uid(),
+            data: iso,
+            local,
+            inicio,
+            fim,
+            valor,
+            obs,
+            extra,
+            repetir,
+            serieId
+        });
+
+        if (repetir === "diario") {
+            atual.setDate(atual.getDate() + 1);
+        } else if (repetir === "semanal") {
+            atual.setDate(atual.getDate() + 7);
+        } else if (repetir === "mensal") {
+            atual.setMonth(atual.getMonth() + 1);
+        } else {
+            break;
+        }
+    }
+}
           }
           state.showShiftForm = false;
           persistData();
