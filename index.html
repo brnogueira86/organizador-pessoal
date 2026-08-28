@@ -2891,7 +2891,7 @@ ${buildJarvisRichContext()}`;
 
         window.openShiftForm = () => {
           state.editingShiftId = null;
-          state.shiftForm = { data: state.selectedDay, local: "", inicio: "19:00", fim: "07:00", valor: "", obs: "", extra: "nao", presetId: "manual" };
+          state.shiftForm = { data: state.selectedDay, local: "", inicio: "19:00", fim: "07:00", valor: "", obs: "", extra: "nao", presetId: "manual", repetir: "nenhum", repetirAte: "", serieId: null };
           state.showShiftForm = true;
           render();
         };
@@ -2899,7 +2899,7 @@ ${buildJarvisRichContext()}`;
           const s = state.shifts.find(s => s.id === id);
           if (!s) return;
           state.editingShiftId = id;
-          state.shiftForm = { data: s.data, local: s.local, inicio: s.inicio, fim: s.fim, valor: s.valor, obs: s.obs || "", extra: s.extra || "nao", presetId: "manual" };
+          state.shiftForm = { data: s.data, local: s.local, inicio: s.inicio, fim: s.fim, valor: s.valor, obs: s.obs || "", extra: s.extra || "nao", presetId: "manual", repetir: s.repetir || "nenhum", repetirAte: s.repetirAte || "", serieId: s.serieId || null };
           state.showShiftForm = true;
           render();
         };
