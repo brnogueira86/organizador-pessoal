@@ -2931,7 +2931,38 @@ ${buildJarvisRichContext()}`;
           };
           const extraShiftUnits = monthShiftsExtra.reduce((sum, s) => sum + (shiftHours(s) / 12), 0);
           const formatShiftUnits = (n) => Number.isInteger(n) ? String(n) : String(Number(n.toFixed(2))).replace(".", ",");
-          const monthTotal = monthShifts.reduce((sum, s) => sum + Number(s.valor || 0), 0);
+          // ABEL_SHIFT_STATS_V1
+const todayShiftStats = new Date();
+todayShiftStats.setHours(23, 59, 59, 999);
+const completedShifts = state.shifts.filter(s => {
+  if (!s.data) return false;
+  const d = new Date(`${s.data}T00:00:00`);
+  return !Number.isNaN(d.getTime()) && d <= todayShiftStats;
+});
+const completedShiftHours = completedShifts.reduce((sum, s) => sum + shiftHours(s), 0);
+const completedExtraUnits = completedShifts
+  .filter(s => s.extra === "sim")
+  .reduce((sum, s) => sum + (shiftHours(s) / 12), 0);
+const completedMonths = completedShifts.reduce((acc, s) => {
+  const key = String(s.data || "").slice(0, 7);
+  if (!key) return acc;
+  if (!acc[key]) acc[key] = { shifts: 0, hours: 0 };
+  acc[key].shifts += 1;
+  acc[key].hours += shiftHours(s);
+  return acc;
+}, {});
+const completedMonthEntries = Object.entries(completedMonths);
+const activeMonthCount = completedMonthEntries.length;
+const avgShiftsPerMonth = activeMonthCount ? completedShifts.length / activeMonthCount : 0;
+const avgHoursPerMonth = activeMonthCount ? completedShiftHours / activeMonthCount : 0;
+const busiestMonthEntry = completedMonthEntries.sort((a, b) => b[1].shifts - a[1].shifts)[0];
+const formatStatNumber = (n) => Number.isInteger(n) ? String(n) : String(Number(n.toFixed(1))).replace(".", ",");
+const formatMonthLabel = (key) => {
+  if (!key) return "—";
+  const [yy, mm] = key.split("-").map(Number);
+  return new Intl.DateTimeFormat("pt-BR", { month: "short", year: "numeric" }).format(new Date(yy, mm - 1, 1)).replace(" de ", "/");
+};
+const monthTotal = monthShifts.reduce((sum, s) => sum + Number(s.valor || 0), 0);
           const dayList = itemsByDay[state.selectedDay] || [];
 
           return `
@@ -2957,6 +2988,40 @@ ${buildJarvisRichContext()}`;
                   <span class="text-[#8A8F98]">${monthShiftsNormal.length} plantão(ões) · ${formatShiftUnits(extraShiftUnits)} extra(s) · ${monthAppointments.length} compromisso(s)</span>
                   <span style="color: ${accent}">${brl(monthTotal)}</span>
                 </div>
+<div class="mt-4 pt-4 border-t border-[#2A313B]">
+  <div class="flex items-center justify-between gap-3 mb-3">
+    <div>
+      <div class="text-[11px] uppercase tracking-[0.16em] text-[#D5A928] font-semibold">Estatísticas de Plantões</div>
+      <div class="text-[11px] text-[#747C88] mt-1">Histórico de plantões realizados até hoje</div>
+    </div>
+  </div>
+  <div class="grid grid-cols-2 md:grid-cols-3 gap-2.5">
+    <div class="rounded-xl border border-[#28313C] bg-[#111820] p-3">
+      <div class="text-xl font-semibold text-[#F2F0EA]">${completedShifts.length}</div>
+      <div class="text-[11px] text-[#8A929E] mt-1">Plantões realizados</div>
+    </div>
+    <div class="rounded-xl border border-[#28313C] bg-[#111820] p-3">
+      <div class="text-xl font-semibold text-[#F2F0EA]">${formatStatNumber(completedShiftHours)} h</div>
+      <div class="text-[11px] text-[#8A929E] mt-1">Horas trabalhadas</div>
+    </div>
+    <div class="rounded-xl border border-[#28313C] bg-[#111820] p-3">
+      <div class="text-xl font-semibold text-[#F2F0EA]">${formatShiftUnits(completedExtraUnits)}</div>
+      <div class="text-[11px] text-[#8A929E] mt-1">Extras realizados</div>
+    </div>
+    <div class="rounded-xl border border-[#28313C] bg-[#111820] p-3">
+      <div class="text-xl font-semibold text-[#F2F0EA]">${formatStatNumber(avgShiftsPerMonth)}</div>
+      <div class="text-[11px] text-[#8A929E] mt-1">Média de plantões/mês</div>
+    </div>
+    <div class="rounded-xl border border-[#28313C] bg-[#111820] p-3">
+      <div class="text-xl font-semibold text-[#F2F0EA]">${formatStatNumber(avgHoursPerMonth)} h</div>
+      <div class="text-[11px] text-[#8A929E] mt-1">Média de horas/mês</div>
+    </div>
+    <div class="rounded-xl border border-[#28313C] bg-[#111820] p-3">
+      <div class="text-base font-semibold text-[#F2F0EA]">${busiestMonthEntry ? formatMonthLabel(busiestMonthEntry[0]) : "—"}</div>
+      <div class="text-[11px] text-[#8A929E] mt-1">Mês com mais plantões${busiestMonthEntry ? ` · ${busiestMonthEntry[1].shifts}` : ""}</div>
+    </div>
+  </div>
+</div>
               </div>
 
               <div class="bg-[#161B22] border border-[#2A313C] rounded-xl p-4 flex flex-col gap-3">
