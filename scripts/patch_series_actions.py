@@ -3,37 +3,7 @@ from pathlib import Path
 p = Path('index.html')
 t = p.read_text(encoding='utf-8')
 
-old_edit = '''        window.editShift = (id) => {
-          const s = state.shifts.find(s => s.id === id);
-          if (!s) return;
-          state.editingShiftId = id;
-          state.shiftForm = { data: s.data, local: s.local, inicio: s.inicio, fim: s.fim, valor: s.valor, obs: s.obs || "", extra: s.extra || "nao", presetId: "manual", repetir: s.repetir || "nenhum", repetirAte: s.repetirAte || "", serieId: s.serieId || null };
-          state.showShiftForm = true;
-          render();
-        };
-        window.closeShiftForm = () => { state.showShiftForm = false; state.editingShiftId = null; render(); };
-        window.removeShift = (id) => {
-          state.shifts = state.shifts.filter(s => s.id !== id);
-          persistData();
-          render();
-        };'''
-
-new_edit = '''        window.editShift = (id) => {
-          const s = state.shifts.find(s => s.id === id);
-          if (!s) return;
-          let editScope = "occurrence";
-          if (s.serieId) {
-            const editarSerie = window.confirm("Este plantão faz parte de uma série recorrente.\\n\\nOK = editar toda a série\\nCancelar = editar somente este plantão");
-            editScope = editarSerie ? "series" : "occurrence";
-          }
-          state.editingShiftId = id;
-          state.editingShiftScope = editScope;
-          state.shiftForm = { data: s.data, local: s.local, inicio: s.inicio, fim: s.fim, valor: s.valor, obs: s.obs || "", extra: s.extra || "nao", presetId: "manual", repetir: s.repetir || "nenhum", repetirAte: s.repetirAte || "", serieId: s.serieId || null };
-          state.showShiftForm = true;
-          render();
-        };
-        window.closeShiftForm = () => { state.showShiftForm = false; state.editingShiftId = null; state.editingShiftScope = null; render(); };
-        window.removeShift = (id) => {
+old_remove = '''        window.removeShift = (id) => {
           const s = state.shifts.find(s => s.id === id);
           if (!s) return;
           if (s.serieId) {
@@ -48,35 +18,82 @@ new_edit = '''        window.editShift = (id) => {
           render();
         };'''
 
-if t.count(old_edit) != 1:
-    raise SystemExit('edit/remove block not found exactly once')
-t = t.replace(old_edit, new_edit, 1)
-
-old_submit = '''          if (state.editingShiftId) {
-            state.shifts = state.shifts.map(s => s.id === state.editingShiftId ? { ...s, data: data || s.data, local, inicio, fim, valor, obs, extra } : s);
-            state.editingShiftId = null;
-          } else {'''
-
-new_submit = '''          if (state.editingShiftId) {
-            const original = state.shifts.find(s => s.id === state.editingShiftId);
-            if (original && original.serieId && state.editingShiftScope === "series") {
-              const originalDate = new Date(original.data + "T12:00:00");
-              const newDate = new Date((data || original.data) + "T12:00:00");
-              const deltaDays = Math.round((newDate - originalDate) / 86400000);
-              state.shifts = state.shifts.map(s => {
-                if (s.serieId !== original.serieId) return s;
-                const shifted = new Date(s.data + "T12:00:00");
-                shifted.setDate(shifted.getDate() + deltaDays);
-                return { ...s, data: shifted.toISOString().slice(0, 10), local, inicio, fim, valor, obs, extra, repetir, repetirAte };
-              });
+new_remove = '''        window.removeShift = (id) => {
+          const s = state.shifts.find(s => s.id === id);
+          if (!s) return;
+          if (s.serieId) {
+            const excluirSerie = window.confirm("Este plantão faz parte de uma série recorrente.\\n\\nOK = excluir toda a série\\nCancelar = escolher outra opção");
+            if (excluirSerie) {
+              state.shifts = state.shifts.filter(item => item.serieId !== s.serieId);
             } else {
-              state.shifts = state.shifts.map(s => s.id === state.editingShiftId ? { ...s, data: data || s.data, local, inicio, fim, valor, obs, extra, repetir, repetirAte } : s);
+              const excluirSomenteEste = window.confirm("Excluir somente este plantão da série?\\n\\nOK = excluir somente este\\nCancelar = não excluir nada");
+              if (!excluirSomenteEste) return;
+              state.shifts = state.shifts.filter(item => item.id !== id);
             }
-            state.editingShiftId = null;
-            state.editingShiftScope = null;
-          } else {'''
+          } else {
+            if (!window.confirm("Excluir este plantão?")) return;
+            state.shifts = state.shifts.filter(item => item.id !== id);
+          }
+          persistData();
+          render();
+        };'''
 
-if t.count(old_submit) != 1:
-    raise SystemExit('submit edit block not found exactly once')
-t = t.replace(old_submit, new_submit, 1)
+if t.count(old_remove) != 1:
+    raise SystemExit('current removeShift block not found exactly once')
+t = t.replace(old_remove, new_remove, 1)
+
+old_start = '''            const dataInicial = data || state.selectedDay;
+
+if (repetir === "nenhum" || !repetirAte) {'''
+new_start = '''            const dataInicial = data || state.selectedDay;
+
+            if (repetir !== "nenhum" && repetirAte && repetirAte < dataInicial) {
+              window.alert("A data final da repetição não pode ser anterior à data inicial.");
+              return;
+            }
+
+if (repetir === "nenhum" || !repetirAte) {'''
+if t.count(old_start) != 1:
+    raise SystemExit('recurrence start block not found exactly once')
+t = t.replace(old_start, new_start, 1)
+
+old_loop_start = '''    let atual = new Date(dataInicial + "T12:00:00");
+    const limite = new Date(repetirAte + "T12:00:00");
+
+    while (atual <= limite) {'''
+new_loop_start = '''    let atual = new Date(dataInicial + "T12:00:00");
+    const limite = new Date(repetirAte + "T12:00:00");
+    const diaBaseMensal = atual.getDate();
+
+    while (atual <= limite) {'''
+if t.count(old_loop_start) != 1:
+    raise SystemExit('recurrence loop start not found exactly once')
+t = t.replace(old_loop_start, new_loop_start, 1)
+
+old_month = '''        } else if (repetir === "mensal") {
+            atual.setMonth(atual.getMonth() + 1);
+        } else {'''
+new_month = '''        } else if (repetir === "mensal") {
+            const primeiroDoProximoMes = new Date(atual.getFullYear(), atual.getMonth() + 1, 1, 12, 0, 0);
+            const ultimoDiaDoProximoMes = new Date(
+              primeiroDoProximoMes.getFullYear(),
+              primeiroDoProximoMes.getMonth() + 1,
+              0,
+              12,
+              0,
+              0
+            ).getDate();
+            atual = new Date(
+              primeiroDoProximoMes.getFullYear(),
+              primeiroDoProximoMes.getMonth(),
+              Math.min(diaBaseMensal, ultimoDiaDoProximoMes),
+              12,
+              0,
+              0
+            );
+        } else {'''
+if t.count(old_month) != 1:
+    raise SystemExit('monthly recurrence block not found exactly once')
+t = t.replace(old_month, new_month, 1)
+
 p.write_text(t, encoding='utf-8')
