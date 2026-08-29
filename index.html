@@ -283,6 +283,14 @@
       }
     </style>
 
+    <!-- ABEL_PWA_V1 -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#070b12">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Abel Ferreira">
+
 </head>
 <body class="min-h-screen w-full">
     <!-- Tela de Login / Bloqueio -->
@@ -4432,5 +4440,14 @@ if (repetir === "nenhum" || !repetirAte) {
           render();
         };
     </script>
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./service-worker.js').catch(err => console.error('Service Worker:', err));
+        });
+      }
+    </script>
+
 </body>
 </html>
