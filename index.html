@@ -2914,11 +2914,16 @@ ${buildJarvisRichContext()}`;
           const s = state.shifts.find(s => s.id === id);
           if (!s) return;
           if (s.serieId) {
-            const excluirSerie = window.confirm("Este plantão faz parte de uma série recorrente.\n\nOK = excluir toda a série\nCancelar = excluir somente este plantão");
-            state.shifts = excluirSerie
-              ? state.shifts.filter(item => item.serieId !== s.serieId)
-              : state.shifts.filter(item => item.id !== id);
+            const excluirSerie = window.confirm("Este plantão faz parte de uma série recorrente.\n\nOK = excluir toda a série\nCancelar = escolher outra opção");
+            if (excluirSerie) {
+              state.shifts = state.shifts.filter(item => item.serieId !== s.serieId);
+            } else {
+              const excluirSomenteEste = window.confirm("Excluir somente este plantão da série?\n\nOK = excluir somente este\nCancelar = não excluir nada");
+              if (!excluirSomenteEste) return;
+              state.shifts = state.shifts.filter(item => item.id !== id);
+            }
           } else {
+            if (!window.confirm("Excluir este plantão?")) return;
             state.shifts = state.shifts.filter(item => item.id !== id);
           }
           persistData();
@@ -4079,6 +4084,11 @@ const repetirAte = document.getElementById("f-shift-repetir-ate").value;
           } else {
             const dataInicial = data || state.selectedDay;
 
+            if (repetir !== "nenhum" && repetirAte && repetirAte < dataInicial) {
+              window.alert("A data final da repetição não pode ser anterior à data inicial.");
+              return;
+            }
+
 if (repetir === "nenhum" || !repetirAte) {
     state.shifts.push({
         id: uid(),
@@ -4096,6 +4106,7 @@ if (repetir === "nenhum" || !repetirAte) {
     const serieId = uid();
     let atual = new Date(dataInicial + "T12:00:00");
     const limite = new Date(repetirAte + "T12:00:00");
+    const diaBaseMensal = atual.getDate();
 
     while (atual <= limite) {
         const iso = atual.toISOString().slice(0, 10);
@@ -4119,7 +4130,23 @@ if (repetir === "nenhum" || !repetirAte) {
         } else if (repetir === "semanal") {
             atual.setDate(atual.getDate() + 7);
         } else if (repetir === "mensal") {
-            atual.setMonth(atual.getMonth() + 1);
+            const primeiroDoProximoMes = new Date(atual.getFullYear(), atual.getMonth() + 1, 1, 12, 0, 0);
+            const ultimoDiaDoProximoMes = new Date(
+              primeiroDoProximoMes.getFullYear(),
+              primeiroDoProximoMes.getMonth() + 1,
+              0,
+              12,
+              0,
+              0
+            ).getDate();
+            atual = new Date(
+              primeiroDoProximoMes.getFullYear(),
+              primeiroDoProximoMes.getMonth(),
+              Math.min(diaBaseMensal, ultimoDiaDoProximoMes),
+              12,
+              0,
+              0
+            );
         } else {
             break;
         }
