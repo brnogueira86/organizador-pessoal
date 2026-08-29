@@ -1,0 +1,106 @@
+name: Patch recurring shift series actions
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/patch-series-actions.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add individual or series editing and deletion
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          t = p.read_text(encoding='utf-8')
+
+          old_edit = '''        window.editShift = (id) => {
+          const s = state.shifts.find(s => s.id === id);
+          if (!s) return;
+          state.editingShiftId = id;
+          state.shiftForm = { data: s.data, local: s.local, inicio: s.inicio, fim: s.fim, valor: s.valor, obs: s.obs || "", extra: s.extra || "nao", presetId: "manual", repetir: s.repetir || "nenhum", repetirAte: s.repetirAte || "", serieId: s.serieId || null };
+          state.showShiftForm = true;
+          render();
+        };
+        window.closeShiftForm = () => { state.showShiftForm = false; state.editingShiftId = null; render(); };
+        window.removeShift = (id) => {
+          state.shifts = state.shifts.filter(s => s.id !== id);
+          persistData();
+          render();
+        };'''
+
+          new_edit = '''        window.editShift = (id) => {
+          const s = state.shifts.find(s => s.id === id);
+          if (!s) return;
+          let editScope = "occurrence";
+          if (s.serieId) {
+            const editarSerie = window.confirm("Este plantão faz parte de uma série recorrente.\\n\\nOK = editar toda a série\\nCancelar = editar somente este plantão");
+            editScope = editarSerie ? "series" : "occurrence";
+          }
+          state.editingShiftId = id;
+          state.editingShiftScope = editScope;
+          state.shiftForm = { data: s.data, local: s.local, inicio: s.inicio, fim: s.fim, valor: s.valor, obs: s.obs || "", extra: s.extra || "nao", presetId: "manual", repetir: s.repetir || "nenhum", repetirAte: s.repetirAte || "", serieId: s.serieId || null };
+          state.showShiftForm = true;
+          render();
+        };
+        window.closeShiftForm = () => { state.showShiftForm = false; state.editingShiftId = null; state.editingShiftScope = null; render(); };
+        window.removeShift = (id) => {
+          const s = state.shifts.find(s => s.id === id);
+          if (!s) return;
+          if (s.serieId) {
+            const excluirSerie = window.confirm("Este plantão faz parte de uma série recorrente.\\n\\nOK = excluir toda a série\\nCancelar = excluir somente este plantão");
+            state.shifts = excluirSerie
+              ? state.shifts.filter(item => item.serieId !== s.serieId)
+              : state.shifts.filter(item => item.id !== id);
+          } else {
+            state.shifts = state.shifts.filter(item => item.id !== id);
+          }
+          persistData();
+          render();
+        };'''
+
+          if t.count(old_edit) != 1:
+              raise SystemExit('edit/remove block not found exactly once')
+          t = t.replace(old_edit, new_edit, 1)
+
+          old_submit = '''          if (state.editingShiftId) {
+            state.shifts = state.shifts.map(s => s.id === state.editingShiftId ? { ...s, data: data || s.data, local, inicio, fim, valor, obs, extra } : s);
+            state.editingShiftId = null;
+          } else {'''
+          new_submit = '''          if (state.editingShiftId) {
+            const original = state.shifts.find(s => s.id === state.editingShiftId);
+            if (original && original.serieId && state.editingShiftScope === "series") {
+              const originalDate = new Date(original.data + "T12:00:00");
+              const newDate = new Date((data || original.data) + "T12:00:00");
+              const deltaDays = Math.round((newDate - originalDate) / 86400000);
+              state.shifts = state.shifts.map(s => {
+                if (s.serieId !== original.serieId) return s;
+                const shifted = new Date(s.data + "T12:00:00");
+                shifted.setDate(shifted.getDate() + deltaDays);
+                return { ...s, data: shifted.toISOString().slice(0, 10), local, inicio, fim, valor, obs, extra, repetir, repetirAte };
+              });
+            } else {
+              state.shifts = state.shifts.map(s => s.id === state.editingShiftId ? { ...s, data: data || s.data, local, inicio, fim, valor, obs, extra, repetir, repetirAte } : s);
+            }
+            state.editingShiftId = null;
+            state.editingShiftScope = null;
+          } else {'''
+          if t.count(old_submit) != 1:
+              raise SystemExit('submit edit block not found exactly once')
+          t = t.replace(old_submit, new_submit, 1)
+          p.write_text(t, encoding='utf-8')
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name "ChatGPT"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          git commit -m "Permitir editar ou excluir ocorrencia ou serie de plantao"
+          git push
