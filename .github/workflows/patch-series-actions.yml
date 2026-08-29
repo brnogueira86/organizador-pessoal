@@ -21,5 +21,5 @@ jobs:
           git config user.name "ChatGPT"
           git config user.email "actions@users.noreply.github.com"
           git add index.html
-          git commit -m "Permitir editar ou excluir ocorrencia ou serie de plantao"
+          git commit -m "Aprimorar recorrencia mensal e exclusao segura"
           git push
