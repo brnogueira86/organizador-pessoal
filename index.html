@@ -2913,6 +2913,16 @@ ${buildJarvisRichContext()}`;
           const monthAppointments = state.appointments.filter(a => a.data.startsWith(monthKey));
           const monthShiftsNormal = monthShifts.filter(s => s.extra !== "sim");
           const monthShiftsExtra = monthShifts.filter(s => s.extra === "sim");
+          // ABEL_EXTRA_SHIFT_UNITS_V1
+          const shiftHours = (s) => {
+            const [ih, im] = String(s.inicio || "00:00").split(":").map(Number);
+            const [fh, fm] = String(s.fim || "00:00").split(":").map(Number);
+            let minutes = (fh * 60 + fm) - (ih * 60 + im);
+            if (minutes <= 0) minutes += 24 * 60;
+            return minutes / 60;
+          };
+          const extraShiftUnits = monthShiftsExtra.reduce((sum, s) => sum + (shiftHours(s) / 12), 0);
+          const formatShiftUnits = (n) => Number.isInteger(n) ? String(n) : String(Number(n.toFixed(2))).replace(".", ",");
           const monthTotal = monthShifts.reduce((sum, s) => sum + Number(s.valor || 0), 0);
           const dayList = itemsByDay[state.selectedDay] || [];
 
@@ -2936,7 +2946,7 @@ ${buildJarvisRichContext()}`;
                   <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-yellow-400"></span> Compromisso</span>
                 </div>
                 <div class="mt-4 pt-3 border-t border-[#2A313C] flex justify-between text-sm font-mono">
-                  <span class="text-[#8A8F98]">${monthShiftsNormal.length} plantão(ões) · ${monthShiftsExtra.length} extra(s) · ${monthAppointments.length} compromisso(s)</span>
+                  <span class="text-[#8A8F98]">${monthShiftsNormal.length} plantão(ões) · ${formatShiftUnits(extraShiftUnits)} extra(s) · ${monthAppointments.length} compromisso(s)</span>
                   <span style="color: ${accent}">${brl(monthTotal)}</span>
                 </div>
               </div>
