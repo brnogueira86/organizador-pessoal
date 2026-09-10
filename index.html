@@ -1128,10 +1128,10 @@ nav .active,[aria-current='page']{background:linear-gradient(180deg,rgba(215,173
           document.getElementById("header-icon").setAttribute("data-lucide", activeTabObj.icon);
           
           const navContainer = document.getElementById("nav-tabs");
-          navContainer.innerHTML = TABS.map(t => {
+          navContainer.innerHTML = `<!-- ABEL_TRAINER_NAV_V3 --><a href="./trainer.html" class="flex items-center gap-2 px-4 py-3 text-xs tracking-[0.12em] whitespace-nowrap text-[#47E6FF] hover:text-white transition-colors shrink-0" title="Trainer"><span aria-hidden="true">⚡</span><span>TRAINER</span></a>` + TABS.map(t => {
             const active = t.id === state.currentTab;
             return `
-              <!-- ABEL_TRAINER_NAV_V2 --><a href="./trainer.html" class="flex items-center gap-2 px-4 py-3 text-xs tracking-[0.12em] whitespace-nowrap text-[#47E6FF] hover:text-white transition-colors" title="Trainer"><span aria-hidden="true">⚡</span><span>TRAINER</span></a><button onclick="window.switchTab('${t.id}')" class="relative flex items-center gap-2 px-4 py-3 text-xs uppercase tracking-widest font-semibold transition-colors whitespace-nowrap snap-start shrink-0" style="color: ${active ? t.accent : "#8A8F98"}">
+              <button onclick="window.switchTab('${t.id}')" class="relative flex items-center gap-2 px-4 py-3 text-xs uppercase tracking-widest font-semibold transition-colors whitespace-nowrap snap-start shrink-0" style="color: ${active ? t.accent : "#8A8F98"}">
                 <i data-lucide="${t.icon}" class="w-4 h-4"></i>
                 <span>${t.label}</span>
                 ${active ? `<span class="absolute left-2 right-2 -bottom-px h-[3px] rounded-full" style="background: ${t.accent}"></span>` : ""}
