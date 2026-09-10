@@ -1,0 +1,1 @@
+Redesign global do Abel Ferreira: visual futurista, confortável e consistente em todas as abas, incluindo Trainer, Agenda, Central, Finanças, Investimentos e Lembretes. Preservar legibilidade, responsividade e funcionalidades atuais.
