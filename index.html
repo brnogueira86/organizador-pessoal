@@ -2976,7 +2976,18 @@ ${buildJarvisRichContext()}`;
             const maxDots = 5;
             const dotColorFor = (item) => {
               if (isSel) return '#12171E';
-              if (item.type === 'shift') return item.extra === "sim" ? '#ef4444' : '#10b981';
+              // ABEL_NIGHT_SHIFT_PURPLE_V1: turnos noturnos aparecem em roxo, inclusive extras.
+              if (item.type === 'shift') {
+                const start = String(item.inicio || '').slice(0, 5);
+                const end = String(item.fim || '').slice(0, 5);
+                const toMin = (v) => /^\d{2}:\d{2}$/.test(v) ? Number(v.slice(0,2))*60 + Number(v.slice(3,5)) : null;
+                const a = toMin(start), b = toMin(end);
+                // Considera noturno se o plantão começa a partir das 18h, antes das 6h,
+                // ou atravessa a madrugada. Não classifica 07h–19h como noturno.
+                const night = a !== null && (a >= 1080 || a < 360 || (b !== null && b < a));
+                if (night) return '#a855f7';
+                return item.extra === "sim" ? '#ef4444' : '#10b981';
+              }
               return '#facc15';
             };
             let dotsMarkup = dayItems.slice(0, maxDots).map(i => `<span class="w-1.5 h-1.5 rounded-full" style="background: ${dotColorFor(i)}"></span>`).join("");
@@ -3061,6 +3072,7 @@ const monthTotal = monthShifts.reduce((sum, s) => sum + Number(s.valor || 0), 0)
                 <div class="flex items-center gap-4 mt-3 text-[10px] text-[#8A8F98]">
                   <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Plantão</span>
                   <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-red-500"></span> Plantão Extra</span>
+                  <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full" style="background:#a855f7"></span> Plantão Noturno</span>
                   <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-yellow-400"></span> Compromisso</span>
                 </div>
                 <div class="mt-4 pt-3 border-t border-[#2A313C] flex justify-between text-sm font-mono">
